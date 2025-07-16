@@ -4,7 +4,15 @@ from langchain.memory import ConversationBufferMemory
 import time
 
 folder_files = Path(__file__).parent / "files"
-folder_files.mkdir(exist_ok=True)
+folder_files.mkdir(exist_ok=True) # Garante que a pasta exista
+
+def cria_chain_conversa():
+    st.session_state["chain"] = True
+    # Mensagens ficticias
+    memory = ConversationBufferMemory(return_messages=True)
+    memory.chat_memory.add_user_message ("Oi")
+    memory.chat_memory.add_ai_message("Olá. Sou PDFBot.")
+    st.session_state["memory"] = memory
 
 def chat_app():
     st.header("[robo] Bem vindo ao ChatPDF", divider=True)
@@ -12,8 +20,25 @@ def chat_app():
         st.error("Faça o upload de pdfs para começar")
         st.stop()
 
-def cria_chain_conversa():
-    st.session_state["chain"] = True
+    memory = st.session_state["memory"]
+    messages = memory.load_memory_variables({})["history"]
+    #st.write(messages)
+    container = st.container()
+    for message in messages:
+        chat = container.chat_message(message.type)
+        chat.markdown(message.content)
+    
+    # simular o envio das mensagens (statico por enquanto)
+    new_message = st.chat_input("Converse com os seus documentos")
+    if new_message:
+        chat = container.chat_message("human")
+        chat.markdown(message.content)
+        chat = container.chat_message("ai")
+        chat.markdown("Gerando Resposta")
+        time.sleep(2)
+        memory.chat_memory.add_user_message(new_message)
+        memory.chat_memory.add_ai_message("Assistente novamente...")
+        st.rerun()
 
 def save_uploaded_files(uploaded_files, folder):
     """Salva arquivos enviado na parta especificada."""
