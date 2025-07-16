@@ -1,8 +1,16 @@
 import streamlit as st
 from pathlib import Path
+from langchain.memory import ConversationBufferMemory
+import time
 
 folder_files = Path(__file__).parent / "files"
 folder_files.mkdir(exist_ok=True)
+
+def chat_app():
+    st.header("[robo] Bem vindo ao ChatPDF", divider=True)
+    if not "chain" in st.session_state:
+        st.error("Faça o upload de pdfs para começar")
+        st.stop()
 
 def cria_chain_conversa():
     st.session_state["chain"] = True
@@ -14,7 +22,6 @@ def save_uploaded_files(uploaded_files, folder):
     # salvar novos arquivo enviados
     for file in uploaded_files:
         (folder / file.name).write_bytes(file.read())
-
 
 def main():
     with st.sidebar:
@@ -36,6 +43,8 @@ def main():
                 st. success ("Inicializando o Chat...")
                 cria_chain_conversa()
                 st.rerun()
+    
+    chat_app()
 
 if __name__ == "__main__":
     main()
