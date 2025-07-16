@@ -1,18 +1,9 @@
 import streamlit as st
-from pathlib import Path
-from langchain.memory import ConversationBufferMemory
 import time
+from backend import cria_chain_conversa, folder_files
 
-folder_files = Path(__file__).parent / "files"
-folder_files.mkdir(exist_ok=True) # Garante que a pasta exista
-
-def cria_chain_conversa():
-    st.session_state["chain"] = True
-    # Mensagens ficticias
-    memory = ConversationBufferMemory(return_messages=True)
-    memory.chat_memory.add_user_message ("Oi")
-    memory.chat_memory.add_ai_message("Olá. Sou PDFBot.")
-    st.session_state["memory"] = memory
+# folder_files = Path(__file__).parent / "files"
+# folder_files.mkdir(exist_ok=True) # Garante que a pasta exista
 
 def chat_app():
     st.header("[robo] Bem vindo ao ChatPDF", divider=True)
@@ -20,9 +11,10 @@ def chat_app():
         st.error("Faça o upload de pdfs para começar")
         st.stop()
 
-    memory = st.session_state["memory"]
-    messages = memory.load_memory_variables({})["history"]
-    #st.write(messages)
+    chain = st.session_state["chain"]
+    memory = chain.memory
+    messages = memory.load_memory_variables({})["chat_history"]
+
     container = st.container()
     for message in messages:
         chat = container.chat_message(message.type)
@@ -32,12 +24,10 @@ def chat_app():
     new_message = st.chat_input("Converse com os seus documentos")
     if new_message:
         chat = container.chat_message("human")
-        chat.markdown(message.content)
+        chat.markdown(new_message)
         chat = container.chat_message("ai")
         chat.markdown("Gerando Resposta")
-        time.sleep(2)
-        memory.chat_memory.add_user_message(new_message)
-        memory.chat_memory.add_ai_message("Assistente novamente...")
+        chain.invoke({"question": new_message})
         st.rerun()
 
 def save_uploaded_files(uploaded_files, folder):
